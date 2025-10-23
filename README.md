@@ -20,10 +20,10 @@ It provides real-time results with visual annotations, total cell counts, WBC/RB
    - cd blood-cell-detection-streamlit
 
 2. *Install dependencies*
-   pip install -r requirements.txt
+   - pip install -r requirements.txt
 
 3. *Run the Streamlit app*
-   streamlit run app.py
+   - streamlit run app.py
 
 **Requirements:**
 Make sure your requirements.txt includes:
