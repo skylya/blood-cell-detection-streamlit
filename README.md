@@ -15,14 +15,14 @@ It provides real-time results with visual annotations, total cell counts, WBC/RB
 - Simple, interactive web interface built with Streamlit.
 
 **Installation:**
-1. Clone the repository
-   git clone https://github.com/<your-username>/blood-cell-detection-streamlit.git
-   cd blood-cell-detection-streamlit
+1. *Clone the repository*
+   - git clone https://github.com/<your-username>/blood-cell-detection-streamlit.git
+   - cd blood-cell-detection-streamlit
 
-2. Install dependencies
+2. *Install dependencies*
    pip install -r requirements.txt
 
-3. Run the Streamlit app
+3. *Run the Streamlit app*
    streamlit run app.py
 
 **Requirements:**
@@ -49,7 +49,7 @@ This emphasizes that small sample images may not represent the actual clinical r
 
 ├── app.py                           # Main Streamlit application
 ├── requirements.txt                 # List of dependencies
-├── sample_bloodcell_streamlit.jpg   # Example image
+├── sample_bloodcell_streamlit.jpg   # Example image for user reference
 └── README.md                        # Documentation
 
 **The app displays:**
