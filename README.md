@@ -59,6 +59,7 @@ This emphasizes that small sample images may not represent the actual clinical r
 - Downloadable report files
 
 **Online Access:**
+https://blood-cell-detection-app-3opttkwuzhug33esarbho9.streamlit.app/
 
 **Developed By:**
 Nur Liyana Balqis Binti Huzaini
