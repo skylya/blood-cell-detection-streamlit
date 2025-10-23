@@ -48,8 +48,11 @@ This emphasizes that small sample images may not represent the actual clinical r
 **Project Structure:**
 
 ├── app.py                           # Main Streamlit application
+
 ├── requirements.txt                 # List of dependencies
+
 ├── sample_bloodcell_streamlit.jpg   # Example image for user reference
+
 └── README.md                        # Documentation
 
 **The app displays:**
