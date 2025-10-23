@@ -58,6 +58,8 @@ This emphasizes that small sample images may not represent the actual clinical r
 - WBC/RBC ratio and infection status
 - Downloadable report files
 
+**Online Access:**
+
 **Developed By:**
 Nur Liyana Balqis Binti Huzaini
 *Image Processing and Computer Vision — Assignment A1*
