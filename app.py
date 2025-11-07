@@ -15,9 +15,9 @@ SAMPLE_PATH = os.path.join(BASE_DIR, "sample_bloodcell_streamlit.jpg")
 # ============================================================
 # Streamlit App Configuration
 # ============================================================
-st.set_page_config(page_title="Blood Cell Detection System", layout="wide")
+st.set_page_config(page_title="🩸 Blood Cell Detection System", layout="wide")
 
-# Title with color change only (no logic changes)
+# Title with color change only 
 st.markdown(
     """
     <h1 style='color:#b30000; font-weight:700;'>Blood Cell Type Detection and Counting System</h1>
@@ -25,7 +25,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Sidebar (added only; does not modify detection logic)
+# Sidebar 
 st.sidebar.title("🩸 Blood Detection")
 st.sidebar.write("Upload a microscopic blood smear image on the main page to automatically detect and classify **WBC** and **RBC** cells.")
 st.sidebar.write("---")
@@ -168,10 +168,10 @@ if uploaded_file is not None:
             status = "Possible infection (high WBC count)" if ratio > 0.02 else "Normal ratio"
 
             # ============================================================
-            # DISPLAY RESULTS (SIMPLE TAB VIEW — NO CUSTOM CSS)
+            # DISPLAY RESULTS 
             # ============================================================
             
-            tabs = st.tabs(["🖼 Processed Image", "📊 Cell Count Summary"])
+            tabs = st.tabs(["Processed Image", "Cell Count Summary"])
             
             with tabs[0]:
                 st.image(result, caption=f"WBC: {total_wbc} | RBC: {total_rbc}", use_container_width=True)
@@ -192,6 +192,7 @@ if uploaded_file is not None:
             
                 st.write(f"**Total Cells Detected:** {total_cells}")
             
+
 
 
 
