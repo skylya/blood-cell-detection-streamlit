@@ -1,6 +1,3 @@
-# ✅ Updated Streamlit UI customization for title & result section
-# ⚠️ Detection logic UNCHANGED as requested
-
 import streamlit as st
 import cv2
 import numpy as np
@@ -20,141 +17,210 @@ SAMPLE_PATH = os.path.join(BASE_DIR, "sample_bloodcell_streamlit.jpg")
 # ============================================================
 st.set_page_config(page_title="Blood Cell Detection System", layout="wide")
 
-# Custom CSS
+# Title with color change only (no logic changes)
 st.markdown(
     """
-    <style>
-        /* Fancy Title */
-        .custom-title {
-            font-size: 42px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #b30000, #ff4d4d);
-            -webkit-background-clip: text;
-            color: transparent;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        /* Fancy result card */
-        .result-box {
-            background: #fff5f5;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #b30000;
-            text-align: center;
-            font-size: 18px;
-        }
-        .result-number {
-            font-size: 32px;
-            font-weight: 800;
-            color: #b30000;
-        }
-    </style>
+    <h1 style='color:#b30000; font-weight:700;'>Blood Cell Type Detection and Counting System</h1>
     """,
     unsafe_allow_html=True,
 )
 
-# Title
-st.markdown("<h1 class='custom-title'>Blood Cell Type Detection & Counting System</h1>", unsafe_allow_html=True)
-
-# Sidebar
+# Sidebar (added only; does not modify detection logic)
 st.sidebar.title("🩸 Blood Detection")
-st.sidebar.write("Upload a microscopic blood smear image to detect WBC & RBC cells.")
+st.sidebar.write("Upload a microscopic blood smear image on the main page to automatically detect and classify **WBC** and **RBC** cells.")
 st.sidebar.write("---")
-st.sidebar.write("• Use well-stained microscope images")
-st.sidebar.write("• Avoid shadows / overexposure")
+st.sidebar.write("Tips:")
+st.sidebar.write("- Use well-stained microscopic images")
+st.sidebar.write("- Avoid extreme lighting/shadows")
 
-# Example Display
+# Safely display example image
 if os.path.exists(SAMPLE_PATH):
     sample_img = cv2.cvtColor(cv2.imread(SAMPLE_PATH), cv2.COLOR_BGR2RGB)
-    st.image(sample_img, caption="Example Microscopic Blood Sample", use_container_width=True)
+    st.image(sample_img, caption="Example of a Microscopic Blood Smear Image", use_container_width=True)
 else:
-    st.warning("Example image not found.")
+    st.warning("Example image not found. Please upload your own image to continue.")
 
-st.write("Upload a blood smear image to automatically classify **WBC** and **RBC** cells.")
+st.markdown("""
+Upload a blood smear image to automatically detect and classify **WBC** and **RBC** cells.
+""")
 
-# Upload file
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
+st.markdown("""
+> **Important:**  
+> For best accuracy, please upload **microscopic blood smear images** similar to the example above.  
+> This system uses **color segmentation** to distinguish:
+> - **Red Blood Cells (RBCs):** light pink to red hues  
+> - **White Blood Cells (WBCs):** purple to blue hues nucleus  
+>
+> Images with **different lighting, colors, or non-microscopic samples** may produce inaccurate results,  
+> as the model is calibrated for this specific staining and microscopy type.
+""")
 
-if uploaded_file:
+# ============================================================
+# File Upload
+# ============================================================
+uploaded_file = st.file_uploader("Upload Blood Cell Image", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    # Convert uploaded file to OpenCV image
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     if image is None:
-        st.error("Invalid image.")
+        st.error("Could not read the uploaded image.")
     else:
-        st.success("✅ Image uploaded successfully!")
+        st.success("Image uploaded successfully!")
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         st.image(image_rgb, caption="Original Image", use_container_width=True)
 
-        # ===== Processing (unchanged) =====
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lower_purple, upper_purple = np.array([110,60,60]), np.array([160,255,255])
-        purple_mask = cv2.inRange(hsv, lower_purple, upper_purple)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
-        purple_mask = cv2.morphologyEx(purple_mask, cv2.MORPH_OPEN, kernel, iterations=1)
-        purple_mask = cv2.morphologyEx(purple_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        # ============================================================
+        # PROCESSING SECTION
+        # ============================================================
+        with st.spinner("Analyzing image, please wait..."):
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(purple_mask)
-        if num_labels > 1:
-            largest_idx = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-            wbc_nucleus_mask = np.uint8(labels == largest_idx) * 255
-        else:
-            wbc_nucleus_mask = np.zeros_like(purple_mask)
+            # --- Purple mask (WBC nucleus) ---
+            lower_purple = np.array([110, 60, 60])
+            upper_purple = np.array([160, 255, 255])
+            purple_mask = cv2.inRange(hsv, lower_purple, upper_purple)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+            purple_mask = cv2.morphologyEx(purple_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+            purple_mask = cv2.morphologyEx(purple_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
 
-        contours_wbc,_ = cv2.findContours(wbc_nucleus_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        wbc_cells = []
-        for contour in contours_wbc:
-            area = cv2.contourArea(contour)
-            peri = cv2.arcLength(contour, True)
-            if 800 < area < 30000 and peri>0:
-                if (4*np.pi*area/(peri**2)) > 0.1:
-                    wbc_cells.append(contour)
+            # Keep largest blob (WBC nucleus)
+            num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(purple_mask)
+            if num_labels > 1:
+                largest_idx = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+                wbc_nucleus_mask = np.uint8(labels == largest_idx) * 255
+            else:
+                wbc_nucleus_mask = np.zeros_like(purple_mask)
 
-        lower_body, upper_body = np.array([100,25,20]), np.array([170,255,255])
-        purple_body = cv2.inRange(hsv, lower_body, upper_body)
-        wbc_body = wbc_nucleus_mask.copy()
-        grow_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(15,15))
-        for _ in range(10):
-            d = cv2.dilate(wbc_body, grow_kernel)
-            wbc_body = cv2.bitwise_or(wbc_body, cv2.bitwise_and(d,purple_body))
-        wbc_exc = cv2.dilate(wbc_body, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(13,13)))
+            # --- Find WBC contours ---
+            contours_wbc, _ = cv2.findContours(wbc_nucleus_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            min_wbc_area, max_wbc_area = 800, 30000
+            wbc_cells = []
+            for contour in contours_wbc:
+                area = cv2.contourArea(contour)
+                if min_wbc_area < area < max_wbc_area:
+                    perimeter = cv2.arcLength(contour, True)
+                    if perimeter > 0:
+                        circularity = 4 * np.pi * area / (perimeter ** 2)
+                        if circularity > 0.1:
+                            wbc_cells.append(contour)
 
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        clahe = cv2.createCLAHE(3.0,(8,8))
-        enhanced = clahe.apply(gray)
-        blurred = cv2.medianBlur(enhanced,5)
-        edges = cv2.Canny(blurred,40,100)
-        edges[wbc_exc>0] = 0
-        circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT,1.2,20,param1=80,param2=25,minRadius=10,maxRadius=35)
-        rbc_cells = []
-        if circles is not None:
-            for (x,y,r) in np.round(circles[0,:]).astype(int):
-                if wbc_exc[y,x] == 0 and not any(np.hypot(x-a,y-b) < (r+c)*1.0 for (a,b,c) in rbc_cells):
-                    rbc_cells.append((x,y,r))
+            # --- WBC body expansion ---
+            lower_purple_body = np.array([100, 25, 20])
+            upper_purple_body = np.array([170, 255, 255])
+            purple_body_mask = cv2.inRange(hsv, lower_purple_body, upper_purple_body)
+            wbc_body = wbc_nucleus_mask.copy()
+            growth_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+            for _ in range(10):
+                dilated = cv2.dilate(wbc_body, growth_kernel, iterations=1)
+                dilated = cv2.bitwise_and(dilated, purple_body_mask)
+                wbc_body = cv2.bitwise_or(wbc_body, dilated)
+            wbc_exclusion = cv2.dilate(wbc_body, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)), iterations=1)
 
-        # Draw results
-        result = image_rgb.copy()
-        for c in wbc_cells:
-            (x,y),r = cv2.minEnclosingCircle(c)
-            cv2.circle(result,(int(x),int(y)),int(r*1.4),(0,255,0),3)
-            cv2.putText(result,"WBC",(int(x)-25,int(y)-10),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,255,0),2)
-        for (x,y,r) in rbc_cells:
-            cv2.circle(result,(x,y),int(r*1.05),(255,0,0),2)
-            cv2.putText(result,"RBC",(x-12,y+4),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,0,0),1)
+            # --- RBC Detection ---
+            gray_rbc = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+            enhanced = clahe.apply(gray_rbc)
+            blurred = cv2.medianBlur(enhanced, 5)
+            edges = cv2.Canny(blurred, 40, 100)
+            edges[wbc_exclusion > 0] = 0
 
-        total_wbc, total_rbc = len(wbc_cells), len(rbc_cells)
-        ratio = total_wbc/total_rbc if total_rbc>0 else 0
-        status = "⚠️ Possible infection (high WBC count)" if ratio > 0.02 else "✅ Normal ratio"
+            circles = cv2.HoughCircles(
+                blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
+                param1=80, param2=25, minRadius=10, maxRadius=35
+            )
+            rbc_candidates = []
+            if circles is not None:
+                circles = np.round(circles[0, :]).astype(int)
+                wbc_margin = cv2.dilate(wbc_exclusion, np.ones((15, 15), np.uint8), iterations=1)
+                for (x, y, r) in circles:
+                    if wbc_margin[y, x] == 0:
+                        rbc_candidates.append((x, y, r))
+            rbc_cells = []
+            for (x, y, r) in sorted(rbc_candidates, key=lambda c: (c[1], c[0])):
+                too_close = any(np.hypot(x - fx, y - fy) < (r + fr) * 1.0 for (fx, fy, fr) in rbc_cells)
+                if not too_close:
+                    rbc_cells.append((x, y, r))
 
-        st.image(result, caption=f"Detected Cells", use_container_width=True)
+            # ============================================================
+            # DRAW RESULTS
+            # ============================================================
+            result = image_rgb.copy()
+            for contour in wbc_cells:
+                (x, y), radius = cv2.minEnclosingCircle(contour)
+                cv2.circle(result, (int(x), int(y)), int(radius * 1.4), (0, 255, 0), 3)
+                cv2.putText(result, "WBC", (int(x) - 25, int(y) - int(radius) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            for (x, y, r) in rbc_cells:
+                cv2.circle(result, (x, y), int(r * 1.05), (0, 0, 255), 2)
+                cv2.putText(result, "RBC", (x - 12, y + 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
 
-        # ========= Fancy Metrics Box =========
-        st.markdown("""
-        <div class='result-box'>
-            <p><b>White Blood Cells:</b> <span class='result-number'>""" + str(total_wbc) + """</span></p>
-            <p><b>Red Blood Cells:</b> <span class='result-number'>""" + str(total_rbc) + """</span></p>
-            <p><b>WBC/RBC Ratio:</b> <span class='result-number'>""" + f"{ratio:.4f}" + """</span></p>
-            <p>""" + status + """</p>
-        </div>
-        """, unsafe_allow_html=True)
+            # ============================================================
+            # STATS + REPORT
+            # ============================================================
+            total_wbc = len(wbc_cells)
+            total_rbc = len(rbc_cells)
+            total_cells = total_wbc + total_rbc
+            ratio = total_wbc / total_rbc if total_rbc > 0 else 0
+            status = "Possible infection (high WBC count)" if ratio > 0.02 else "Normal ratio"
+
+            # ============================================================
+            # DISPLAY RESULTS
+            # ============================================================
+            st.subheader("Detection Results")
+            st.image(result, caption=f"WBC: {total_wbc} | RBC: {total_rbc}", use_container_width=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label="White Blood Cells (WBC)", value=total_wbc)
+                st.metric(label="Red Blood Cells (RBC)", value=total_rbc)
+            with col2:
+                st.metric(label="WBC/RBC Ratio", value=f"{ratio:.4f}")
+                st.markdown(status)
+
+            # ============================================================
+            # EXPORT RESULTS
+            # ============================================================
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            annotated_name = f"blood_result_{timestamp}.jpg"
+            csv_name = f"blood_stats_{timestamp}.csv"
+            txt_name = f"blood_report_{timestamp}.txt"
+
+            # Save annotated image
+            _, buffer = cv2.imencode(".jpg", cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+
+            # CSV and TXT
+            df = pd.DataFrame({
+                "Type": ["WBC", "RBC"],
+                "Count": [total_wbc, total_rbc],
+                "WBC/RBC Ratio": [f"{ratio:.4f}", ""],
+                "Status": [status, ""]
+            })
+            csv = df.to_csv(index=False).encode('utf-8')
+
+            report = f"""
+BLOOD CELL DETECTION REPORT
+==============================
+Generated on: {timestamp}
+
+White Blood Cells (WBC):  {total_wbc}
+Red Blood Cells (RBC):    {total_rbc}
+------------------------------
+Total Cells:              {total_cells}
+WBC/RBC Ratio:            {ratio:.4f}
+Status:                   {status}
+==============================
+"""
+
+            # Downloads
+            st.download_button("Download Annotated Image", data=buffer.tobytes(),
+                               file_name=annotated_name, mime="image/jpeg")
+            st.download_button("Download Statistics (CSV)", data=csv,
+                               file_name=csv_name, mime="text/csv")
+            st.download_button("Download Text Report", data=report.encode(),
+                               file_name=txt_name, mime="text/plain")
+else:
+    st.info("Upload a blood smear image to begin analysis.")
