@@ -174,7 +174,7 @@ if uploaded_file is not None:
             st.markdown("""
             <style>
             .result-card {
-                background: rgba(255,240,240,0.9);
+                background: #ffffff;
                 padding: 20px;
                 border-radius: 15px;
                 border: 1px solid #ffb3b3;
@@ -225,5 +225,6 @@ if uploaded_file is not None:
                 st.markdown(f"<p class='{status_class}'>{status}</p>", unsafe_allow_html=True)
             
                 st.markdown("</div>", unsafe_allow_html=True)
+
 
 
