@@ -16,7 +16,22 @@ SAMPLE_PATH = os.path.join(BASE_DIR, "sample_bloodcell_streamlit.jpg")
 # Streamlit App Configuration
 # ============================================================
 st.set_page_config(page_title="Blood Cell Detection System", layout="wide")
-st.title("Blood Cell Type Detection and Counting System")
+
+# Title with color change only (no logic changes)
+st.markdown(
+    """
+    <h1 style='color:#b30000; font-weight:700;'>Blood Cell Type Detection and Counting System</h1>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Sidebar (added only; does not modify detection logic)
+st.sidebar.title("🩸 Blood Detection")
+st.sidebar.write("Upload a microscopic blood smear image on the main page to automatically detect and classify **WBC** and **RBC** cells.")
+st.sidebar.write("---")
+st.sidebar.write("Tips:")
+st.sidebar.write("- Use well-stained microscopic images")
+st.sidebar.write("- Avoid extreme lighting/shadows")
 
 # Safely display example image
 if os.path.exists(SAMPLE_PATH):
