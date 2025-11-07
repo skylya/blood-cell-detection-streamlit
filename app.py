@@ -167,60 +167,61 @@ if uploaded_file is not None:
             ratio = total_wbc / total_rbc if total_rbc > 0 else 0
             status = "Possible infection (high WBC count)" if ratio > 0.02 else "Normal ratio"
 
-            # ============================================================
-            # DISPLAY RESULTS
-            # ============================================================
-            st.subheader("Detection Results")
-            st.image(result, caption=f"WBC: {total_wbc} | RBC: {total_rbc}", use_container_width=True)
+# ============================================================
+# DISPLAY RESULTS (FANCY STYLED TAB)
+# ============================================================
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric(label="White Blood Cells (WBC)", value=total_wbc)
-                st.metric(label="Red Blood Cells (RBC)", value=total_rbc)
-            with col2:
-                st.metric(label="WBC/RBC Ratio", value=f"{ratio:.4f}")
-                st.markdown(status)
+st.markdown("""
+<style>
+.result-card {
+    background: rgba(255,240,240,0.9);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #ffb3b3;
+    box-shadow: 0px 4px 12px rgba(255,0,0,0.15);
+}
+.result-title {
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    color: #b30000;
+    margin-bottom: 10px;
+}
+.result-metric {
+    font-size: 20px;
+    font-weight: 600;
+    color: #8c0000;
+}
+.status-badge {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    background: #ff4d4d;
+    padding: 6px 12px;
+    border-radius: 10px;
+    text-align: center;
+}
+.status-normal {
+    background: #2eb82e;
+}
+</style>
+""", unsafe_allow_html=True)
 
-            # ============================================================
-            # EXPORT RESULTS
-            # ============================================================
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            annotated_name = f"blood_result_{timestamp}.jpg"
-            csv_name = f"blood_stats_{timestamp}.csv"
-            txt_name = f"blood_report_{timestamp}.txt"
+tabs = st.tabs(["🖼 Processed Image", "📊 Cell Count Summary"])
 
-            # Save annotated image
-            _, buffer = cv2.imencode(".jpg", cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+with tabs[0]:
+    st.image(result, caption=f"WBC: {total_wbc} | RBC: {total_rbc}", use_container_width=True)
 
-            # CSV and TXT
-            df = pd.DataFrame({
-                "Type": ["WBC", "RBC"],
-                "Count": [total_wbc, total_rbc],
-                "WBC/RBC Ratio": [f"{ratio:.4f}", ""],
-                "Status": [status, ""]
-            })
-            csv = df.to_csv(index=False).encode('utf-8')
+with tabs[1]:
+    st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='result-title'>Detection Summary</div>", unsafe_allow_html=True)
 
-            report = f"""
-BLOOD CELL DETECTION REPORT
-==============================
-Generated on: {timestamp}
+    colA, colB, colC = st.columns(3)
+    colA.markdown(f"<p class='result-metric'>🧬 WBC: {total_wbc}</p>", unsafe_allow_html=True)
+    colB.markdown(f"<p class='result-metric'>🩸 RBC: {total_rbc}</p>", unsafe_allow_html=True)
+    colC.markdown(f"<p class='result-metric'>⚖️ Ratio: {ratio:.4f}</p>", unsafe_allow_html=True)
 
-White Blood Cells (WBC):  {total_wbc}
-Red Blood Cells (RBC):    {total_rbc}
-------------------------------
-Total Cells:              {total_cells}
-WBC/RBC Ratio:            {ratio:.4f}
-Status:                   {status}
-==============================
-"""
+    status_class = "status-badge status-normal" if ratio <= 0.02 else "status-badge"
+    st.markdown(f"<p class='{status_class}'>{status}</p>", unsafe_allow_html=True)
 
-            # Downloads
-            st.download_button("Download Annotated Image", data=buffer.tobytes(),
-                               file_name=annotated_name, mime="image/jpeg")
-            st.download_button("Download Statistics (CSV)", data=csv,
-                               file_name=csv_name, mime="text/csv")
-            st.download_button("Download Text Report", data=report.encode(),
-                               file_name=txt_name, mime="text/plain")
-else:
-    st.info("Upload a blood smear image to begin analysis.")
+    st.markdown("</div>", unsafe_allow_html=True)
