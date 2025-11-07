@@ -168,44 +168,8 @@ if uploaded_file is not None:
             status = "Possible infection (high WBC count)" if ratio > 0.02 else "Normal ratio"
 
             # ============================================================
-            # DISPLAY RESULTS (FANCY STYLED TAB)
+            # DISPLAY RESULTS (SIMPLE TAB VIEW — NO CUSTOM CSS)
             # ============================================================
-            
-            st.markdown("""
-            <style>
-            .result-card {
-                background: #ffffff;
-                padding: 20px;
-                border-radius: 15px;
-                border: 1px solid #ffb3b3;
-                box-shadow: 0px 4px 12px rgba(255,0,0,0.15);
-            }
-            .result-title {
-                font-size: 24px;
-                font-weight: 800;
-                text-align: center;
-                color: #b30000;
-                margin-bottom: 10px;
-            }
-            .result-metric {
-                font-size: 20px;
-                font-weight: 600;
-                color: #8c0000;
-            }
-            .status-badge {
-                font-size: 18px;
-                font-weight: 700;
-                color: white;
-                background: #ff4d4d;
-                padding: 6px 12px;
-                border-radius: 10px;
-                text-align: center;
-            }
-            .status-normal {
-                background: #2eb82e;
-            }
-            </style>
-            """, unsafe_allow_html=True)
             
             tabs = st.tabs(["🖼 Processed Image", "📊 Cell Count Summary"])
             
@@ -213,18 +177,22 @@ if uploaded_file is not None:
                 st.image(result, caption=f"WBC: {total_wbc} | RBC: {total_rbc}", use_container_width=True)
             
             with tabs[1]:
-                st.markdown("<div class='result-card'>", unsafe_allow_html=True)
-                st.markdown("<div class='result-title'>Detection Summary</div>", unsafe_allow_html=True)
+                st.header("Detection Summary")
+                
+                st.metric("White Blood Cells (WBC)", total_wbc)
+                st.metric("Red Blood Cells (RBC)", total_rbc)
+                st.metric("WBC / RBC Ratio", f"{ratio:.4f}")
             
-                colA, colB, colC = st.columns(3)
-                colA.markdown(f"<p class='result-metric'>🧬 WBC: {total_wbc}</p>", unsafe_allow_html=True)
-                colB.markdown(f"<p class='result-metric'>🩸 RBC: {total_rbc}</p>", unsafe_allow_html=True)
-                colC.markdown(f"<p class='result-metric'>⚖️ Ratio: {ratio:.4f}</p>", unsafe_allow_html=True)
+                st.write("---")
+                
+                if ratio > 0.02:
+                    st.error("Possible infection (high WBC count)")
+                else:
+                    st.success("Normal WBC/RBC ratio")
             
-                status_class = "status-badge status-normal" if ratio <= 0.02 else "status-badge"
-                st.markdown(f"<p class='{status_class}'>{status}</p>", unsafe_allow_html=True)
+                st.write(f"**Total Cells Detected:** {total_cells}")
             
-                st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 
