@@ -83,7 +83,7 @@ This emphasizes that small sample images may not represent the actual clinical r
 ---
 
 ## Online Access:
-Try the app live here: [Automated Pothole Detection](https://blood-cell-detection-app-3opttkwuzhug33esarbho9.streamlit.app/)
+Try the app live here: [Automated Blood Cell Detection](https://blood-cell-detection-app-3opttkwuzhug33esarbho9.streamlit.app/)
 
 
    
